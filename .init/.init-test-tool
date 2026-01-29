@@ -1,0 +1,4 @@
+{
+    "command": "pytest",
+    "working_directory": "/home/kavia/workspace/code-generation/unified-marketplace-platform-312081-312092/backend_expressjs"
+}
