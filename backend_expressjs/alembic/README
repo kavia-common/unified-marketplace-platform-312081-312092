@@ -1,0 +1,5 @@
+Alembic migrations for backend_expressjs.
+
+Common commands:
+- alembic upgrade head
+- alembic revision --autogenerate -m "change"
