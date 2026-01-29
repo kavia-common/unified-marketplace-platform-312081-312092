@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy import text
 
-from src.api.db import engine, db_session
+from src.api.db import db_session, get_engine
 from src.api.routes import router as api_router
 from src.api.seed import seed_if_empty
 
@@ -59,7 +59,14 @@ def _startup() -> None:
     Notes:
     - We do not auto-run alembic migrations here (production should run migrations explicitly).
       We only validate DB connectivity and allow optional seeding for local/demo environments.
+    - The platform may not provide DATABASE_URL in some environments (e.g., preview/CI).
+      In that case, we skip DB checks so the service can still boot and serve /api/health.
     """
+    engine = get_engine()
+    if engine is None:
+        # DB not configured; keep service up for health checks and non-DB endpoints.
+        return
+
     # quick connectivity check
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))

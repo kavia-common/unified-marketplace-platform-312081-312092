@@ -19,8 +19,10 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))
 
-if not JWT_SECRET:
-    raise RuntimeError("JWT_SECRET is not set. Please configure it in backend_expressjs .env (see .env.example).")
+# IMPORTANT:
+# The platform environment may not inject JWT_SECRET in some deployments. We must not crash
+# at import time because /api/health should always be reachable. If JWT is not configured,
+# auth-dependent routes will return 503 with a clear message.
 
 
 def _now_utc() -> datetime:
@@ -62,6 +64,12 @@ def get_current_user(
     creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ) -> User:
     """FastAPI dependency that returns the authenticated user (from Bearer JWT)."""
+    if not JWT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Auth is not configured (JWT_SECRET missing).",
+        )
+
     if creds is None or not creds.credentials:
         raise _unauthorized()
 
